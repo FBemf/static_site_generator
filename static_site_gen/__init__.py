@@ -1,4 +1,1 @@
-from . import compile
-
-def main():
-    compile.compile()
+from .compile import compile

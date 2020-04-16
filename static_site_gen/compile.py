@@ -13,11 +13,15 @@ from . import admonition
 
 
 def compile():
+    # Load templates
     env = Environment(loader=FileSystemLoader("templates"))
     template = env.get_template("page.html")
+
+    # load vars
     with open("data.toml") as f:
         render_vars = toml.loads(f.read())
 
+    # init markdown system
     md = markdown.Markdown(
         extensions=[
             "meta",
@@ -30,6 +34,8 @@ def compile():
             KatexExtension(),
         ]
     )
+
+    # read in the pages
     with open(f"index.md") as f:
         text = f.read()
     html = md.convert(text)
@@ -61,13 +67,14 @@ def compile():
         except (KeyError, IndexError) as e:
             print(f"Bad metadata in post {file}: {e}")
             sys.exit(1)
-    posts.sort(key=lambda x: x["date"])
+    posts.sort(key=lambda x: x["date"], reverse=True)
     render_vars["posts"] = posts
 
     for page in render_vars["posts"] + [render_vars["index"]]:
         slug = page["slug"]
         page["url"] = f"{slug}.html"
 
+    # Write to the output dir
     if os.path.exists("output"):
         for f in os.listdir("output"):
             os.remove(f"output/{f}")
@@ -90,7 +97,3 @@ def compile():
             f.write(rendered)
 
     print("Build successful!")
-
-
-if __name__ == "__main__":
-    main()
