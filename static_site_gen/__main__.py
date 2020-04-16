@@ -1,0 +1,3 @@
+from . import compile
+
+compile()
