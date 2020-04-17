@@ -1,1 +1,1 @@
-from .compile import compile
+from .build import compile

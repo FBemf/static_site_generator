@@ -4,3 +4,15 @@
 title = "Sample Blog"
 subtitle = "Just Boilerplate"
 description = "Just a sample blog"
+
+# then we'll have each file at the top level of posts/
+# recognized as a page and placed at the url posts/whatever
+[pages]
+directories = ["posts/"]
+files = ["index.html"]
+
+[raw]
+directories = ["assets/"]
+
+[templates]
+directories = ["templates/"]

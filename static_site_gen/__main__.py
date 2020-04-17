@@ -1,3 +1,3 @@
-from . import compile
+from . import build
 
 compile()
