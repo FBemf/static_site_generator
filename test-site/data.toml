@@ -8,12 +8,12 @@ description = "Just a sample blog"
 # then we'll have each file at the top level of posts/
 # recognized as a page and placed at the url posts/whatever
 [files.pages]
-directories = ["posts/"]
-files = ["index.html"]
+directories = ["posts"]
+files = ["index.md"]
 sort_by_reverse = "date"
 
 [files.assets]
-directories = ["assets/"]
+directories = ["assets"]
 
 [files.templates]
-directories = ["templates/"]
+directories = ["templates"]

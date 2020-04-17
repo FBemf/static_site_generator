@@ -23,7 +23,7 @@
         <img class="is-bg-img">
         <div class="hero-body">
             <div class="container">
-                <a href="{{ index.url }}">
+                <a href="{{ pages.index.url }}">
                     <h1 class="title">{{ site.title }}</h1>
                     <h2 class="subtitle">{{ site.subtitle }}</h2>
                 </a>
@@ -46,7 +46,7 @@
 
                     {% if is_home %}
                     <p class="title is-3">Posts</p>
-                    {% for post in posts %}
+                    {% for post in pages.posts %}
                     <a href="{{ post.url }}">
                         <div class="card">
                             <div class="card-content">
@@ -70,11 +70,11 @@
                     <aside class="menu">
                         <p class="menu-label">Pages</p>
                         <ul class="menu-list">
-                            <li><a href="{{ index.url }}">Home</a></li>
+                            <li><a href="{{ pages.index.url }}">Home</a></li>
                             <li>
                                 <a>Posts</a>
                                 <ul>
-                                    {% for post in posts %}
+                                    {% for post in pages.posts %}
                                     <li><a href="{{ post.url }}">{{ post.title }}</a></li>
                                     {% endfor %}
                                 </ul>

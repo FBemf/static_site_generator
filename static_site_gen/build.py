@@ -14,29 +14,38 @@ from .admonition import AdmonitionExtension
 
 def read_pages(render_vars, md):
     for typ, info in render_vars["files"].items():
-        render_vars[typ] = []
+        render_vars[typ] = {}
         if typ == "pages":
-            for path in info["files"]:
-                data = load_page(path, md)
-                render_vars[typ].append(data)
-            for path in info["directories"]:
-                for thing in os.listdir(path):
-                    if os.isfile(thing):
-                        data = load_page(os.path.join(path, thing), md)
-                        render_vars[typ].append(data)
-            if "sort_by" in info:
-                render_vars[typ].sort(key=lambda x: x[info["sort_by"]])
-            elif "sort_by_reverse" in info:
-                render_vars[typ].sort(
-                    key=lambda x: x[info["sort_by_reverse"]], reverse=True
-                )
+            if "files" in info:
+                for path in info["files"]:
+                    data = load_page(path, md)
+                    slug = os.path.splitext(os.path.basename(path))[0]
+                    render_vars[typ][slug] = data
+            if "directories" in info:
+                for path in info["directories"]:
+                    dir_files = []
+                    for thing in os.listdir(path):
+                        if os.path.isfile(os.path.join(path, thing)):
+                            data = load_page(os.path.join(path, thing), md)
+                            dir_files.append(data)
+                    if "sort_by" in info:
+                        dir_files.sort(key=lambda x: x[info["sort_by"]])
+                    elif "sort_by_reverse" in info:
+                        dir_files.sort(
+                            key=lambda x: x[info["sort_by_reverse"]], reverse=True
+                        )
+                    render_vars[typ][path] = dir_files
         else:
-            for path in info["files"]:
-                render_vars[typ].append(path)
-            for path in info["directories"]:
-                for thing in os.listdir(path):
-                    if os.isfile(thing):
-                        render_vars[typ].append(os.path.join(path, thing))
+            if "files" in info:
+                for path in info["files"]:
+                    render_vars[typ][path] = path
+            if "directories" in info:
+                for path in info["directories"]:
+                    dir_files = []
+                    for thing in os.listdir(path):
+                        if os.path.isfile(os.path.join(path, thing)):
+                            dir_files.append(os.path.join(path, thing))
+                    render_vars[path] = dir_files
 
 
 def load_page(path, md):
@@ -52,51 +61,12 @@ def load_page(path, md):
 
     meta = dict(map(delistify, md.Meta.items()))
     if not "slug" in meta:
-        meta["slug"] = os.path.basename(path)
+        meta["slug"] = os.path.splitext(os.path.basename(path))[0]
+    meta["url"] = os.path.splitext(path)[0] + ".html"
     if "content" in meta:
         raise KeyError  # TODO improve error handling
     meta["content"] = html
     return meta
-
-
-def read_pages2(render_vars, md):
-    with open(f"index.md") as f:
-        text = f.read()
-    html = md.convert(text)
-    try:
-        render_vars["index"] = {
-            "title": md.Meta["title"][0],
-            "slug": "index",
-            "content": html,
-        }
-    except (KeyError, IndexError) as e:
-        print(f"Bad metadata in index.md: {e}")
-        sys.exit(1)
-
-    posts = []
-    for file in os.listdir("posts"):
-        with open(f"posts/{file}") as f:
-            text = f.read()
-        html = md.convert(text)
-        try:
-            current_post = {
-                "title": md.Meta["title"][0],
-                "slug": os.path.splitext(file)[0],
-                "date": md.Meta["date"][0],
-                "description": md.Meta["description"][0],
-                "content": html,
-            }
-            current_post["description"] = md.convert(md.Meta["description"][0])
-            posts.append(current_post)
-        except (KeyError, IndexError) as e:
-            print(f"Bad metadata in post {file}: {e}")
-            sys.exit(1)
-    posts.sort(key=lambda x: x["date"], reverse=True)
-    render_vars["posts"] = posts
-
-    for page in render_vars["posts"] + [render_vars["index"]]:
-        slug = page["slug"]
-        page["url"] = f"{slug}.html"
 
 
 def render_pages(render_vars, template):
@@ -110,12 +80,35 @@ def render_pages(render_vars, template):
         shutil.copy(f"assets/{f}", f"output/{f}")
 
     rendered = template.render(
-        {**render_vars, "page": render_vars["index"], "is_home": True}
+        {**render_vars, "page": render_vars["pages"]["index"], "is_home": True}
     )
     with open("output/index.html", "w") as f:
         f.write(rendered)
 
-    for post in render_vars["posts"]:
+    for post in render_vars["pages"]["posts"]:
+        rendered = template.render({**render_vars, "page": post, "is_home": False})
+        slug = post["slug"]
+        with open(f"output/{slug}.html", "w") as f:
+            f.write(rendered)
+
+
+def render_pages2(render_vars, template):
+    if os.path.exists("output"):
+        for f in os.listdir("output"):
+            os.remove(f"output/{f}")
+    else:
+        os.mkdir("output")
+
+    for f in os.listdir("assets"):
+        shutil.copy(f"assets/{f}", f"output/{f}")
+
+    rendered = template.render(
+        {**render_vars, "page": render_vars["pages"]["index"], "is_home": True}
+    )
+    with open("output/index.html", "w") as f:
+        f.write(rendered)
+
+    for post in render_vars["pages"]["posts"]:
         rendered = template.render({**render_vars, "page": post, "is_home": False})
         slug = post["slug"]
         with open(f"output/{slug}.html", "w") as f:
@@ -145,7 +138,7 @@ def compile():
         ]
     )
 
-    read_pages2(render_vars, md)
+    read_pages(render_vars, md)
 
     render_pages(render_vars, template)
 
