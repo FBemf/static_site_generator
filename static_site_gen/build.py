@@ -14,6 +14,7 @@ import toml
 
 from .mdExtensions.admonition import AdmonitionExtension
 from .mdExtensions.meta import MetaExtension
+from .globals import *
 
 
 def readSiteFiles(contentFiles, md):
@@ -115,17 +116,6 @@ def buildAssetFiles(fileConfig, buildConfig):
     except KeyError:
         pass
 
-    # TODO:
-    # - Add comments & docstrings
-    # - Better error handling
-    # - Better readme
-    # - Default values for config
-    # - CLI
-    #   - specify a different dir to operate on
-    #   - override output dir
-    #   - init a new website
-    # - RSS? Use a different tool for that maybe
-
 
 def buildContentFiles(siteConfig, content, templates, buildConfig):
     """ This renders the pages from the templates and writes them
@@ -156,7 +146,8 @@ def buildSite(silent=False):
         Loads configs and builds the website in the pwd.
     """
     # load config
-    with open("data.toml") as f:
+    global CONFIG_FILE_PATH
+    with open(CONFIG_FILE_PATH) as f:
         config = toml.loads(f.read())
     siteConfig = config["site"]
     templateConfig = config["templates"]
