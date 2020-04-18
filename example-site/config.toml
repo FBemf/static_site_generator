@@ -1,0 +1,22 @@
+# Settings for the blog
+
+[site]
+title = "Sample Blog"
+subtitle = "Just Boilerplate"
+description = "Just a sample blog"
+
+[build]
+buildDirectory = "output"
+
+[templates]
+directories = ["templates"]
+
+# then we'll have each file at the top level of posts/
+# recognized as a page and placed at the url posts/whatever
+[files.pages]
+directories = ["posts"]
+files = ["index.md"]
+sortByReverse = "date"
+
+[files.assets]
+directories = ["assets"]
