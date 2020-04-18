@@ -1,3 +1,8 @@
+""" This file does all the legwork for the site generation.
+    It contains everything except the custom markdown extensions.
+    buildSite() is the main method; call it to build the site in the pwd.
+"""
+
 import os
 import shutil
 import sys
@@ -17,31 +22,28 @@ def readSiteFiles(contentFiles, md):
 
         Args:
             contentFiles, a dict formatted as
-                {
-                    "pages": {  # markdown files to be turned into pages
-                        "files": [],    # a list of loose md files
-                        "directories": [],  # a list of directories containing md files.
+                contentFiles:
+                    "pages":    # markdown files to be turned into pages
+                        "files": []     # loose md files to be rendered into pages
+                        "directories": []   # a list of directories containing md files.
                                             # files in the same dir will be grouped
-                                            # into lists in the template.
-                    },
-                    "assets": { # assets used by the website
-                        "files": [],    # loose asset files used by the site
-                        "directories": [],  # directories containing asset files
+                                            # into lists in the Jinja templates.
+                    "assets":   # assets used by the website
+                        "files": []     # loose asset files used by the site
+                        "directories": []   # directories containing asset files
                                             # these are not meaningfully grouped by directory
-                    },
-                }
             md, a markdown renderer instance
         
         Returns:
             a dict formatted as
-                {
-                    "pages": {  # a dict linking file names to dicts of the page data
-                        fileName: pageData
-                    },
-                    "assets": {
-
-                    }
-                }
+                returnValue:
+                    "pages":
+                        <fileName>: <pageData>  # pageDatas are dicts of info
+                                                # they include file contents and metadata
+                        <dirName>: [<pageData>] # markdown files grouped in dirs are stored in lists
+                    "assets":
+                        <fileName>: <assetPaths>    # assetPaths are just the full path to the file
+                        <dirName>: [<assetPath>]    # assets grouped in dirs are stored in lists
     """
     content = {}
     # fileType == "pages" means this file / directory of files is markdown
@@ -55,7 +57,7 @@ def readSiteFiles(contentFiles, md):
                 if fileType == "pages":
                     data = loadPage(path, md)
                 else:
-                    name = path
+                    data = os.path.join(path, name)
                 content[fileType][name] = data
         # If it's a dir of files, group all the files together in a list
         if "directories" in fileCollection:
@@ -193,6 +195,3 @@ def buildSite(silent=False):
     buildContentFiles(
         siteConfig, content, templates, buildConfig
     )  # render pages into build dir
-
-    if not silent:
-        print("Build successful!")

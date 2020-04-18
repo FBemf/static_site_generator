@@ -1,3 +1,3 @@
-from . import build
+from . import runCli
 
-buildSite()
+runCli()
