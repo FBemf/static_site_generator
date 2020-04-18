@@ -13,6 +13,7 @@ Topic to cover:
 
 TODO:
 
+* Packaging tools
 * Better error handling
 * Better readme
 * Default values for config
