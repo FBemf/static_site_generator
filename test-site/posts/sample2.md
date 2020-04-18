@@ -1,7 +1,8 @@
 ---
-title: Sample Post 2
-date: 2020-04-17
-description: The second of my sample posts
+title = "Sample Post 2"
+date = "2020-04-17"
+description = "The second of my sample posts"
+template = "page.html"
 ---
 
 This is the second sample post.

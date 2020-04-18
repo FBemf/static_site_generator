@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 import os
 import shutil
 import sys
@@ -9,137 +7,192 @@ import markdown
 from markdown_katex import KatexExtension
 import toml
 
-from .admonition import AdmonitionExtension
+from .mdExtensions.admonition import AdmonitionExtension
+from .mdExtensions.meta import MetaExtension
 
 
-def read_pages(render_vars, md):
-    for typ, info in render_vars["files"].items():
-        render_vars[typ] = {}
-        if typ == "pages":
-            if "files" in info:
-                for path in info["files"]:
-                    data = load_page(path, md)
-                    slug = os.path.splitext(os.path.basename(path))[0]
-                    render_vars[typ][slug] = data
-            if "directories" in info:
-                for path in info["directories"]:
-                    dir_files = []
-                    for thing in os.listdir(path):
-                        if os.path.isfile(os.path.join(path, thing)):
-                            data = load_page(os.path.join(path, thing), md)
-                            dir_files.append(data)
-                    if "sort_by" in info:
-                        dir_files.sort(key=lambda x: x[info["sort_by"]])
-                    elif "sort_by_reverse" in info:
-                        dir_files.sort(
-                            key=lambda x: x[info["sort_by_reverse"]], reverse=True
+def readSiteFiles(contentFiles, md):
+    """ Goes through the folders listed in the config
+        and reads all the markdown files in them.
+
+        Args:
+            contentFiles, a dict formatted as
+                {
+                    "pages": {  # markdown files to be turned into pages
+                        "files": [],    # a list of loose md files
+                        "directories": [],  # a list of directories containing md files.
+                                            # files in the same dir will be grouped
+                                            # into lists in the template.
+                    },
+                    "assets": { # assets used by the website
+                        "files": [],    # loose asset files used by the site
+                        "directories": [],  # directories containing asset files
+                                            # these are not meaningfully grouped by directory
+                    },
+                }
+            md, a markdown renderer instance
+        
+        Returns:
+            a dict formatted as
+                {
+                    "pages": {  # a dict linking file names to dicts of the page data
+                        fileName: pageData
+                    },
+                    "assets": {
+
+                    }
+                }
+    """
+    content = {}
+    # fileType == "pages" means this file / directory of files is markdown
+    # fileType == "assets" means it's an asset that is not modified by the SSG
+    for fileType, fileCollection in contentFiles.items():
+        content[fileType] = {}
+        # If it's a single file, address them individually
+        if "files" in fileCollection:
+            for path in fileCollection["files"]:
+                name = os.path.splitext(os.path.basename(path))[0]
+                if fileType == "pages":
+                    data = loadPage(path, md)
+                else:
+                    name = path
+                content[fileType][name] = data
+        # If it's a dir of files, group all the files together in a list
+        if "directories" in fileCollection:
+            for path in fileCollection["directories"]:
+                dirFiles = []
+                for fileOrDir in os.listdir(path):
+                    if os.path.isfile(os.path.join(path, fileOrDir)):
+                        if fileType == "pages":
+                            data = loadPage(os.path.join(path, fileOrDir), md)
+                        else:
+                            data = os.path.join(path, fileOrDir)
+                        dirFiles.append(data)
+                if fileType == "pages":  # sort pages if necessary
+                    if "sortBy" in fileCollection:
+                        dirFiles.sort(key=lambda x: x[fileCollection["sortBy"]])
+                    elif "sortByReverse" in fileCollection:
+                        dirFiles.sort(
+                            key=lambda x: x[fileCollection["sortByReverse"]],
+                            reverse=True,
                         )
-                    render_vars[typ][path] = dir_files
-        else:
-            if "files" in info:
-                for path in info["files"]:
-                    render_vars[typ][path] = path
-            if "directories" in info:
-                for path in info["directories"]:
-                    dir_files = []
-                    for thing in os.listdir(path):
-                        if os.path.isfile(os.path.join(path, thing)):
-                            dir_files.append(os.path.join(path, thing))
-                    render_vars[path] = dir_files
+                content[fileType][path] = dirFiles
+    return content
 
 
-def load_page(path, md):
+def loadPage(path, md):
+    """ Loads a markdown file and parses it into a dict of info.
+    """
     with open(path) as f:
         body = f.read()
     html = md.convert(body)
-
-    def delistify(p):
-        if p[1][0] == "" and len(p[1]) > 1:
-            return (p[0], p[1][1:])
-        else:
-            return (p[0], p[1][0])
-
-    meta = dict(map(delistify, md.Meta.items()))
-    if not "slug" in meta:
-        meta["slug"] = os.path.splitext(os.path.basename(path))[0]
+    meta = md.Meta
     meta["url"] = os.path.splitext(path)[0] + ".html"
     if "content" in meta:
-        raise KeyError  # TODO improve error handling
+        raise KeyError  # TODO better error handling
     meta["content"] = html
     return meta
 
 
-def render_pages(render_vars, template):
-    if os.path.exists("output"):
-        for f in os.listdir("output"):
-            os.remove(f"output/{f}")
-    else:
-        os.mkdir("output")
+def buildAssetFiles(fileConfig, buildConfig):
+    """ Copies asset files into the output directory.
+    """
+    buildDir = buildConfig["buildDirectory"]
+    try:
+        for f in fileConfig["assets"]["files"]:
+            os.makedirs(os.path.join(buildDir, os.path.dirname(f)), exist_ok=True)
+            shutil.copy(f, os.path.join(buildDir, f))
+    except KeyError:
+        pass
+    try:
+        for d in fileConfig["assets"]["directories"]:
+            for f in os.listdir(d):
+                if os.path.isfile(os.path.join(d, f)):
+                    os.makedirs(os.path.join(buildDir, d), exist_ok=True)
+                    shutil.copy(os.path.join(d, f), os.path.join(buildDir, d, f))
+    except KeyError:
+        pass
 
-    for f in os.listdir("assets"):
-        shutil.copy(f"assets/{f}", f"output/{f}")
+    # TODO:
+    # - Add comments & docstrings
+    # - Better error handling
+    # - Better readme
+    # - Default values for config
+    # - CLI
+    #   - specify a different dir to operate on
+    #   - override output dir
+    #   - init a new website
+    # - RSS? Use a different tool for that maybe
 
-    rendered = template.render(
-        {**render_vars, "page": render_vars["pages"]["index"], "is_home": True}
-    )
-    with open("output/index.html", "w") as f:
-        f.write(rendered)
 
-    for post in render_vars["pages"]["posts"]:
-        rendered = template.render({**render_vars, "page": post, "is_home": False})
-        slug = post["slug"]
-        with open(f"output/{slug}.html", "w") as f:
+def buildContentFiles(siteConfig, content, templates, buildConfig):
+    """ This renders the pages from the templates and writes them
+        into the output directory.
+    """
+
+    def buildOneFile(page):
+        rendered = templates[page["template"]].render(
+            {"site": siteConfig, **content, "currentPage": page}
+        )
+        url = page["url"]
+        os.makedirs(os.path.join(buildDir, os.path.dirname(url)), exist_ok=True)
+        with open(f"{buildDir}/{url}", "w") as f:
             f.write(rendered)
 
-
-def render_pages2(render_vars, template):
-    if os.path.exists("output"):
-        for f in os.listdir("output"):
-            os.remove(f"output/{f}")
-    else:
-        os.mkdir("output")
-
-    for f in os.listdir("assets"):
-        shutil.copy(f"assets/{f}", f"output/{f}")
-
-    rendered = template.render(
-        {**render_vars, "page": render_vars["pages"]["index"], "is_home": True}
-    )
-    with open("output/index.html", "w") as f:
-        f.write(rendered)
-
-    for post in render_vars["pages"]["posts"]:
-        rendered = template.render({**render_vars, "page": post, "is_home": False})
-        slug = post["slug"]
-        with open(f"output/{slug}.html", "w") as f:
-            f.write(rendered)
+    buildDir = buildConfig["buildDirectory"]
+    for _, fileOrFileList in content["pages"].items():
+        # if it's a list of file names from the same directory
+        if type(fileOrFileList) == list:
+            for page in fileOrFileList:
+                buildOneFile(page)
+        else:  # it's just a file name
+            buildOneFile(fileOrFileList)
 
 
-def compile():
-    # Load templates
-    env = Environment(loader=FileSystemLoader("templates"))
-    template = env.get_template("page.html")
-
-    # load vars
+def buildSite(silent=False):
+    """ The main function.
+        Loads configs and builds the website in the pwd.
+    """
+    # load config
     with open("data.toml") as f:
-        render_vars = toml.loads(f.read())
+        config = toml.loads(f.read())
+    siteConfig = config["site"]
+    templateConfig = config["templates"]
+    fileConfig = config["files"]
+    buildConfig = config["build"]
+
+    # Load templates
+    templates = {}
+    for d in templateConfig["directories"]:
+        env = Environment(loader=FileSystemLoader(d))
+        for f in os.listdir(d):
+            templates[f] = env.get_template(f)
 
     # init markdown system
     md = markdown.Markdown(
         extensions=[
-            "meta",
             "fenced_code",
             "tables",
             "codehilite",
             "smarty",
             "sane_lists",
+            MetaExtension(),
             AdmonitionExtension(),
             KatexExtension(),
         ]
     )
 
-    read_pages(render_vars, md)
+    # clear output directory
+    if os.path.exists(buildConfig["buildDirectory"]):
+        shutil.rmtree(buildConfig["buildDirectory"])
+    else:
+        os.mkdir(buildConfig["buildDirectory"])
 
-    render_pages(render_vars, template)
+    content = readSiteFiles(fileConfig, md)  # read in assets and pages
+    buildAssetFiles(fileConfig, buildConfig)  # copy assets into build dir
+    buildContentFiles(
+        siteConfig, content, templates, buildConfig
+    )  # render pages into build dir
 
-    print("Build successful!")
+    if not silent:
+        print("Build successful!")
