@@ -15,6 +15,8 @@ TODO:
 
 * Packaging tools
 * Better error handling
+    * Fail helpfully out of missing configs
+    * Fail helpfully on Jinja error
 * Better readme
 * Default values for config
 * RSS? Use a different tool for that maybe
