@@ -9,8 +9,8 @@ import http.server
 import socketserver
 import os
 import shutil
-import toml
 
+import toml
 import click
 
 from .build import buildSite
