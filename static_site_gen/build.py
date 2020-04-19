@@ -34,7 +34,7 @@ def readSiteFiles(contentFiles, md):
                         "directories": []   # directories containing asset files
                                             # these are not meaningfully grouped by directory
             md, a markdown renderer instance
-        
+
         Returns:
             a dict formatted as
                 returnValue:
@@ -51,27 +51,32 @@ def readSiteFiles(contentFiles, md):
     # fileType == "assets" means it's an asset that is not modified by the SSG
     for fileType, fileCollection in contentFiles.items():
         content[fileType] = {}
-        # If it's a single file, address them individually
+        # Loose files which are not grouped into a directory
         if "files" in fileCollection:
             for path in fileCollection["files"]:
                 name = os.path.splitext(os.path.basename(path))[0]
-                if fileType == "pages":
-                    data = loadPage(path, md)
-                else:
-                    data = os.path.join(path, name)
+                data = (
+                    loadPage(path, md)
+                    if fileType == "pages"
+                    else os.path.join(path, name)
+                )
                 content[fileType][name] = data
-        # If it's a dir of files, group all the files together in a list
+
+        # files grouped together in directories
         if "directories" in fileCollection:
-            for path in fileCollection["directories"]:
+            for dirPath in fileCollection["directories"]:
                 dirFiles = []
-                for fileOrDir in os.listdir(path):
-                    if os.path.isfile(os.path.join(path, fileOrDir)):
-                        if fileType == "pages":
-                            data = loadPage(os.path.join(path, fileOrDir), md)
-                        else:
-                            data = os.path.join(path, fileOrDir)
+                for fileOrDir in os.listdir(dirPath):
+                    path = os.path.join(dirPath, fileOrDir)
+                    if os.path.isfile(path):
+                        data = (
+                            loadPage(path, md)
+                            if fileType == "pages"
+                            else os.path.join(path, fileOrDir)
+                        )
                         dirFiles.append(data)
-                if fileType == "pages":  # sort pages if necessary
+
+                if fileType == "pages":  # sort pages in dir if necessary
                     if "sortBy" in fileCollection:
                         dirFiles.sort(key=lambda x: x[fileCollection["sortBy"]])
                     elif "sortByReverse" in fileCollection:
