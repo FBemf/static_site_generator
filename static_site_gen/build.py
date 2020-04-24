@@ -154,10 +154,10 @@ def buildSite(silent=False):
     global CONFIG_FILE_PATH
     with open(CONFIG_FILE_PATH) as f:
         config = toml.loads(f.read())
-    siteConfig = config["site"]
-    templateConfig = config["templates"]
+    siteConfig = SiteConfig(config["site"])
+    templateConfig = FilesConfig(config["templates"])
     fileConfig = config["files"]
-    buildConfig = config["build"]
+    buildConfig = BuildConfig(config["build"])
 
     # Load templates
     templates = {}
