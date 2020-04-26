@@ -6,7 +6,6 @@
 import os
 import shutil
 import sys
-import pprint
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import markdown
@@ -103,9 +102,6 @@ def buildContentFiles(*, buildConfig, siteConfig, content, templates):
     for _, group in content.items():
         for item in group:
             pagesData[item.slug] = item
-
-    pp = pprint.PrettyPrinter()
-    pp.pprint(groupsData["posts"])
 
     for _, group in content.items():
         for page in group:

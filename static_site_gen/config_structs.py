@@ -2,8 +2,8 @@
 """
 
 from dataclasses import dataclass
+import datetime
 from typing import Any, Dict, List, Optional
-import pprint
 
 
 @dataclass
@@ -68,7 +68,7 @@ def parseGroups(groupsDict):
 @dataclass
 class ContentFile:
     title: str
-    date: str
+    date: datetime.date
     description: str
     template: Any
     content: str
