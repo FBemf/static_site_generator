@@ -13,10 +13,11 @@ directories = ["templates"]
 
 # then we'll have each file at the top level of posts/
 # recognized as a page and placed at the url posts/whatever
-[files.pages]
+[pages]
 directories = ["posts"]
 files = ["index.md"]
-sortByReverse = "date"
+sortBy = "date"
+sortReverse = true
 
-[files.assets]
+[assets]
 directories = ["assets"]

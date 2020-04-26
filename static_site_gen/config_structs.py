@@ -1,7 +1,9 @@
 """ A bunch of dataclasses which are used to hold the config data
 """
 
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
+import pprint
 
 
 @dataclass
@@ -11,7 +13,6 @@ class SiteConfig:
     description: str
 
     def __init__(self, map: Dict[str, Any]):
-        super().__init__(map)
         try:
             self.title = map["title"]
             self.subtitle = map["subtitle"]
@@ -26,7 +27,6 @@ class BuildConfig:
     buildDirectory: str
 
     def __init__(self, map: Dict[str, Any]):
-        super().__init__(map)
         try:
             self.buildDirectory = map["buildDirectory"]
         except KeyError as e:
@@ -40,13 +40,8 @@ class FilesConfig:
     directories: List[str]
 
     def __init__(self, map: Dict[str, Any]):
-        super().__init__(map)
-        try:
-            self.files = map["files"]
-            self.files = map["directories"]
-        except KeyError as e:
-            print(f"Config error: bad key {e}")
-            raise
+        self.files = map["files"] if "files" in map else []
+        self.directories = map["directories"] if "directories" in map else []
 
 
 @dataclass
@@ -57,4 +52,14 @@ class PagesConfig(FilesConfig):
     def __init__(self, map: Dict[str, Any]):
         super().__init__(map)
         self.sortBy = map["sortBy"] if "sortBy" in map else None
-        self.sortByReverse = map["sortByReverse"] if "sortByReverse" in map else None
+        self.sortReverse = map["sortReverse"] if "sortByReverse" in map else False
+
+
+@dataclass
+class ContentFile:
+    relativePath: str
+    absPath: str
+    isMarkdown: bool
+    sortBy: bool
+    sortReverse: bool
+    meta: Dict[Any]
