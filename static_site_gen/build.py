@@ -169,12 +169,12 @@ def buildSite(silent=False):
         os.mkdir(buildConfig.buildDirectory)
 
     content = readSiteFiles(pagesConfig, md)
-    buildAssetFiles(
+    buildAssetFiles(  # copy assets into build dir
         assetsConfig=assetsConfig, buildConfig=buildConfig
-    )  # copy assets into build dir
-    buildContentFiles(
+    )
+    buildContentFiles(  # render pages into build dir
         buildConfig=buildConfig,
         siteConfig=siteConfig,
         content=content,
         templates=templates,
-    )  # render pages into build dir
+    )

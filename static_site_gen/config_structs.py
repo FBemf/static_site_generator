@@ -47,13 +47,13 @@ class FilesConfig:
 @dataclass
 class PagesConfig(FilesConfig):
     sortByDate: bool
-    sortByReverse: bool
+    sortReverse: bool
     groupName: str
 
     def __init__(self, map: Dict[str, Any], groupName=None):
         super().__init__(map)
-        self.sortByDate = map["sortBy"] if "sortBy" in map else False
-        self.sortReverse = map["sortReverse"] if "sortByReverse" in map else False
+        self.sortByDate = map["sortByDate"] if "sortByDate" in map else False
+        self.sortReverse = map["sortReverse"] if "sortReverse" in map else False
 
 
 def parseGroups(groupsDict):
