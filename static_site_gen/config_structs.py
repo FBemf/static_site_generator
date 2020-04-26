@@ -46,20 +46,54 @@ class FilesConfig:
 
 @dataclass
 class PagesConfig(FilesConfig):
-    sortBy: Optional[str]
-    sortByReverse: Optional[str]
+    sortByDate: bool
+    sortByReverse: bool
+    groupName: str
 
-    def __init__(self, map: Dict[str, Any]):
+    def __init__(self, map: Dict[str, Any], groupName=None):
         super().__init__(map)
-        self.sortBy = map["sortBy"] if "sortBy" in map else None
+        self.sortByDate = map["sortBy"] if "sortBy" in map else False
         self.sortReverse = map["sortReverse"] if "sortByReverse" in map else False
+
+
+def parseGroups(groupsDict):
+    groups = []
+    for key, val in groupsDict.items():
+        pc = PagesConfig(val)
+        pc.groupName = key
+        groups.append(pc)
+    return groups
 
 
 @dataclass
 class ContentFile:
-    relativePath: str
-    absPath: str
-    isMarkdown: bool
-    sortBy: bool
-    sortReverse: bool
-    meta: Dict[Any]
+    title: str
+    date: str
+    description: str
+    template: Any
+    content: str
+    path: str
+    slug: str
+    url: str
+    group: str
+
+    def __init__(self, map, *, path, slug, url, content, group=None):
+        self.title = map["title"] if "title" in map else None
+        self.date = map["date"] if "date" in map else None
+        self.description = map["description"] if "description" in map else None
+        self.template = map["template"] if "template" in map else None
+        self.slug = slug
+        self.content = content
+        self.path = path
+        self.url = url
+        self.group = group
+
+    def forTemplate(self):
+        return {
+            "title": self.title,
+            "date": self.date,
+            "description": self.description,
+            "content": self.content,
+            "url": self.url,
+            "group": self.group,
+        }

@@ -37,16 +37,16 @@
                 <div class="column">
                     <div class="content">
                         <p class="title is-3">{{ currentPage.title }}</p>
-                        {% if not currentPage.is_index %}
+                        {% if not currentPage.group == "general" %}
                         <p class="subtitle is-6">{{ currentPage.date }}</p>
                         {% endif %}
                         {{ currentPage.content }}
                         <hr class="hr">
                     </div>
 
-                    {% if currentPage.is_index %}
+                    {% if currentPage.group == "general" %}
                     <p class="title is-3">Posts</p>
-                    {% for post in pages.posts %}
+                    {% for post in groups.posts %}
                     <a href="/{{ post.url }}">
                         <div class="card">
                             <div class="card-content">
@@ -74,7 +74,7 @@
                             <li>
                                 <a>Posts</a>
                                 <ul>
-                                    {% for post in pages.posts %}
+                                    {% for post in groups.posts %}
                                     <li><a href="/{{ post.url }}">{{ post.title }}</a></li>
                                     {% endfor %}
                                 </ul>

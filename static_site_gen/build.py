@@ -6,6 +6,7 @@
 import os
 import shutil
 import sys
+import pprint
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import markdown
@@ -18,46 +19,41 @@ from .globals import *
 from .config_structs import *
 
 
-def readSiteFiles(fileCollection, isMarkdown, md):
+def readSiteFiles(groups, md):
     """ Goes through the folders listed in the config
         and reads all the markdown files in them.
 
-        Returns:
-            a dict formatted as either
-                isMarkdown=True:
-                    <fileName>: <pageData>  # pageDatas are dicts of info
-                                            # they include file contents and metadata
-                    <dirName>: [<pageData>] # markdown files grouped in dirs are stored in lists
-                isMarkdown=False:
-                    <fileName>: <assetPaths>    # assetPaths are just the full path to the file
-                    <dirName>: [<assetPath>]    # assets grouped in dirs are stored in lists
+        Returns a tuple of:
+            a list of ContentFile structs
+            a dict of all the groups, each of which is a
+                list of those same ContentFile structs
     """
     content = {}
 
-    for path in fileCollection.files:
-        name = os.path.splitext(os.path.basename(path))[0]
-        data = loadPage(path, md) if isMarkdown else os.path.join(path, name)
-        content[name] = data
+    for group in groups:
+        filesList = []
+        for path in group.files:
+            if not os.path.isfile(path):
+                raise FileNotFoundError
+            fileContent = loadPage(path, md)
+            fileContent.group = group.groupName
+            filesList.append(fileContent)
 
-    for dirPath in fileCollection.directories:
-        dirFiles = []
-        for relativePath in os.listdir(dirPath):
-            absolutePath = os.path.join(dirPath, relativePath)
-            if os.path.isfile(absolutePath):
-                data = (
-                    loadPage(absolutePath, md)
-                    if isMarkdown
-                    else os.path.join(absolutePath, relativePath)
-                )
-                dirFiles.append(data)
+        for dirPath in group.directories:
+            for filename in os.listdir(dirPath):
+                path = os.path.join(dirPath, filename)
+                if not os.path.isfile(path):
+                    raise FileNotFoundError
+                fileContent = loadPage(path, md)
+                fileContent.group = group.groupName
+                filesList.append(fileContent)
 
-        if isMarkdown:
-            if fileCollection.sortBy:
-                dirFiles.sort(
-                    key=lambda x: x[fileCollection.sortBy],
-                    reverse=fileCollection.sortReverse,
-                )
-        content[dirPath] = dirFiles
+        if group.sortByDate:
+            filesList.sort(
+                key=lambda x: x.date, reverse=group.sortReverse,
+            )
+        content[group.groupName] = filesList
+
     return content
 
 
@@ -68,15 +64,13 @@ def loadPage(path, md):
         body = f.read()
     html = md.convert(body)
     meta = md.Meta
-    meta["url"] = os.path.splitext(path)[0] + ".html"
-    if "content" in meta:
-        print(meta)
-        raise KeyError  # TODO better error handling
-    meta["content"] = html
-    return meta
+    slug = os.path.splitext(path)[0]
+    url = slug + ".html"
+    fileContent = ContentFile(meta, path=path, slug=slug, url=url, content=html)
+    return fileContent
 
 
-def buildAssetFiles(assetsConfig, buildConfig):
+def buildAssetFiles(*, assetsConfig, buildConfig):
     """ Copies asset files into the output directory.
     """
     buildDir = buildConfig.buildDirectory
@@ -96,28 +90,49 @@ def buildAssetFiles(assetsConfig, buildConfig):
         pass
 
 
-def buildContentFiles(buildConfig, siteConfig, content, templates):
+def buildContentFiles(*, buildConfig, siteConfig, content, templates):
     """ This renders the pages from the templates and writes them
         into the output directory.
     """
 
-    def buildOneFile(page):
-        rendered = templates[page["template"]].render(
-            {"site": siteConfig, **content, "currentPage": page}
-        )
-        url = page["url"]
-        os.makedirs(os.path.join(buildDir, os.path.dirname(url)), exist_ok=True)
-        with open(f"{buildDir}/{url}", "w") as f:
-            f.write(rendered)
-
     buildDir = buildConfig.buildDirectory
-    for _, fileOrFileList in content["pages"].items():
-        # if it's a list of file names from the same directory
-        if type(fileOrFileList) == list:
-            for page in fileOrFileList:
-                buildOneFile(page)
-        else:  # it's just a file name
-            buildOneFile(fileOrFileList)
+    groupsData = {}
+    for groupName, group in content.items():
+        groupsData[groupName] = list(map(ContentFile.forTemplate, group))
+    pagesData = {}
+    for _, group in content.items():
+        for item in group:
+            pagesData[item.slug] = item
+
+    pp = pprint.PrettyPrinter()
+    pp.pprint(groupsData["posts"])
+
+    for _, group in content.items():
+        for page in group:
+            rendered = templates[page.template].render(
+                {
+                    "site": siteConfig,
+                    "pages": pagesData,
+                    "groups": groupsData,
+                    "currentPage": page.forTemplate(),
+                }
+            )
+            path = os.path.join(buildDir, page.url)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w") as f:
+                f.write(rendered)
+
+
+def loadTempates(templateConfig):
+    templates = {}
+    env = Environment(loader=FileSystemLoader(os.curdir))
+    for f in templateConfig.files:
+        templates[os.path.basename(f)] = env.get_template(f)
+    for d in templateConfig.directories:
+        env = Environment(loader=FileSystemLoader(d))
+        for f in os.listdir(d):
+            templates[f] = env.get_template(f)
+    return templates
 
 
 def buildSite(silent=False):
@@ -130,16 +145,12 @@ def buildSite(silent=False):
         config = toml.loads(f.read())
     assetsConfig = FilesConfig(config["assets"])
     buildConfig = BuildConfig(config["build"])
-    pagesConfig = PagesConfig(config["pages"])
+    pagesConfig = parseGroups(config["pages"])
     siteConfig = SiteConfig(config["site"])
     templateConfig = FilesConfig(config["templates"])
 
     # Load templates
-    templates = {}
-    for d in templateConfig.directories:
-        env = Environment(loader=FileSystemLoader(d))
-        for f in os.listdir(d):
-            templates[f] = env.get_template(f)
+    templates = loadTempates(templateConfig)
 
     # init markdown system
     md = markdown.Markdown(
@@ -161,11 +172,13 @@ def buildSite(silent=False):
     else:
         os.mkdir(buildConfig.buildDirectory)
 
-    content = {
-        "assets": readSiteFiles(assetsConfig, False, md),
-        "pages": readSiteFiles(pagesConfig, True, md),
-    }
-    buildAssetFiles(assetsConfig, buildConfig)  # copy assets into build dir
+    content = readSiteFiles(pagesConfig, md)
+    buildAssetFiles(
+        assetsConfig=assetsConfig, buildConfig=buildConfig
+    )  # copy assets into build dir
     buildContentFiles(
-        buildConfig, siteConfig, content, templates
+        buildConfig=buildConfig,
+        siteConfig=siteConfig,
+        content=content,
+        templates=templates,
     )  # render pages into build dir
