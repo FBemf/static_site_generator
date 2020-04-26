@@ -22,10 +22,11 @@ def readSiteFiles(groups, md):
     """ Goes through the folders listed in the config
         and reads all the markdown files in them.
 
-        Returns a tuple of:
-            a list of ContentFile structs
-            a dict of all the groups, each of which is a
-                list of those same ContentFile structs
+        Arguments:
+            groups is a list of PagesConfigs
+            md is a Markdown renderer object
+
+        Returns a list of ContentFile structs
     """
     content = {}
 
