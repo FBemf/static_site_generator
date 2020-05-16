@@ -28,6 +28,7 @@ def readSiteFiles(groups, md):
 
         Returns a list of ContentFile structs
     """
+    global PAGE_EXTENSION
     content = {}
 
     for group in groups:
@@ -35,7 +36,7 @@ def readSiteFiles(groups, md):
         for path in group.files:
             if not os.path.isfile(path):
                 raise FileNotFoundError
-            fileContent = loadPage(path, md)
+            fileContent = loadPage(path, md, PAGE_EXTENSION)
             fileContent.group = group.groupName
             filesList.append(fileContent)
 
@@ -44,7 +45,7 @@ def readSiteFiles(groups, md):
                 path = os.path.join(dirPath, filename)
                 if not os.path.isfile(path):
                     raise FileNotFoundError
-                fileContent = loadPage(path, md)
+                fileContent = loadPage(path, md, PAGE_EXTENSION)
                 fileContent.group = group.groupName
                 filesList.append(fileContent)
 
@@ -57,16 +58,30 @@ def readSiteFiles(groups, md):
     return content
 
 
-def loadPage(path, md):
+def loadPage(path, md, pageExtension):
     """ Loads a markdown file and parses it into a dict of info.
     """
     with open(path) as f:
         body = f.read()
+
     html = md.convert(body)
     meta = md.Meta
-    slug = os.path.splitext(path)[0]
-    url = slug + ".html"
-    fileContent = ContentFile(meta, path=path, slug=slug, url=url, content=html)
+    dirname = os.path.dirname(path)
+    basename = os.path.basename(path)
+    slug = os.path.splitext(basename)[0]
+
+    if "path" in meta:
+        url = os.path.join(meta["path"], slug) + pageExtension
+    else:
+        url = os.path.join(dirname, slug) + pageExtension
+
+    fileContent = ContentFile(
+        meta,
+        path=path,
+        slug=slug,
+        url=url,
+        content=html,
+    )
     return fileContent
 
 
@@ -170,12 +185,24 @@ def buildSite(silent=False):
         os.mkdir(buildConfig.buildDirectory)
 
     content = readSiteFiles(pagesConfig, md)
-    buildAssetFiles(  # copy assets into build dir
-        assetsConfig=assetsConfig, buildConfig=buildConfig
-    )
-    buildContentFiles(  # render pages into build dir
+    enrichSiteConfig(siteConfig, content)
+    buildAssetFiles(assetsConfig=assetsConfig, buildConfig=buildConfig)
+    buildContentFiles(
         buildConfig=buildConfig,
         siteConfig=siteConfig,
         content=content,
         templates=templates,
     )
+
+
+# Sets the `groups` and `tags` fields in the site config
+def enrichSiteConfig(siteConfig, content):
+    groups = set()
+    tags = set()
+    for (name, group) in content.items():
+        groups.add(name)
+        for page in group:
+            for tag in page.tags:
+                tags.add(tag)
+    siteConfig.groups = sorted(list(groups))
+    siteConfig.tags = sorted(list(tags))

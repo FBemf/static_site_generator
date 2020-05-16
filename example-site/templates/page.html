@@ -37,11 +37,23 @@
                 <div class="column">
                     <div class="content">
                         <p class="title is-3">{{ currentPage.title }}</p>
-                        {% if not currentPage.group == "general" %}
+                        {% if currentPage.group == "posts" %}
                         <p class="subtitle is-6">{{ currentPage.date }}</p>
+                        {% if currentPage.tags|count > 0 %}
+                        <p class="subtitle is-6"> Tags: 
+                            {% for tag in currentPage.tags %}
+                            <a href="/tags?t={{ tag }}">
+                                {{ tag }}{{ ", " if not loop.last }}
+                            </a>
+                            {% endfor %}
+                        </p>
+                        {% endif %}
+                        <br>
                         {% endif %}
                         {{ currentPage.content }}
+                        {% if currentPage.group == "general" %}
                         <hr class="hr">
+                        {% endif %}
                     </div>
 
                     {% if currentPage.group == "general" %}

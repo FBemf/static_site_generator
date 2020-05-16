@@ -3,6 +3,7 @@ title = "Sample Post 2"
 date = 2020-04-17
 description = "The second of my sample posts"
 template = "page.html"
+tags = ["example", "second"]
 ---
 
 This is the second sample post.

@@ -5,18 +5,21 @@ from dataclasses import dataclass
 import datetime
 from typing import Any, Dict, List, Optional
 
-
 @dataclass
 class SiteConfig:
     title: str
     subtitle: str
     description: str
+    groups: str
+    tags: str
 
-    def __init__(self, map: Dict[str, Any]):
+    def __init__(self, map: Dict[str, Any], groups=None, tags=None):
         try:
             self.title = map["title"]
             self.subtitle = map["subtitle"]
             self.description = map["description"]
+            self.groups = groups if groups else []
+            self.tags = tags if tags else []
         except KeyError as e:
             print(f"Config error: bad key {e}")
             raise
@@ -72,6 +75,7 @@ class ContentFile:
     description: str
     template: Any
     content: str
+    tags: List[str]
     path: str
     slug: str
     url: str
@@ -82,6 +86,7 @@ class ContentFile:
         self.date = map["date"] if "date" in map else None
         self.description = map["description"] if "description" in map else None
         self.template = map["template"] if "template" in map else None
+        self.tags = map["tags"] if "tags" in map else []
         self.slug = slug
         self.content = content
         self.path = path
@@ -96,4 +101,5 @@ class ContentFile:
             "content": self.content,
             "url": self.url,
             "group": self.group,
+            "tags": self.tags,
         }

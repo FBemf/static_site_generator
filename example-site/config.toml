@@ -21,3 +21,13 @@ files = ["index.md"]
 
 [assets]
 directories = ["assets"]
+
+[generated]
+    [generated.tags]
+    template = "tags.html"
+    iterateOver = "tags"
+    path = "tags"
+
+    [generated.tags_index]
+    template = "tags.html"
+    path = ""
