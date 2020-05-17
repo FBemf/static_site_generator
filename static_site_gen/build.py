@@ -35,19 +35,22 @@ def readSiteFiles(groups, md):
         filesList = []
         for path in group.files:
             if not os.path.isfile(path):
+                print(f"Couldn't find file {path}")
                 raise FileNotFoundError
             fileContent = loadPage(path, md, PAGE_EXTENSION)
             fileContent.group = group.groupName
             filesList.append(fileContent)
 
-        for dirPath in group.directories:
-            for filename in os.listdir(dirPath):
-                path = os.path.join(dirPath, filename)
-                if not os.path.isfile(path):
-                    raise FileNotFoundError
-                fileContent = loadPage(path, md, PAGE_EXTENSION)
-                fileContent.group = group.groupName
-                filesList.append(fileContent)
+        for topDir in group.directories:
+            for (dirPath, _, childFiles) in os.walk(topDir):
+                for filename in childFiles:
+                    path = os.path.join(dirPath, filename)
+                    if not os.path.isfile(path):
+                        print(f"Couldn't find file {path}")
+                        raise FileNotFoundError
+                    fileContent = loadPage(path, md, PAGE_EXTENSION)
+                    fileContent.group = group.groupName
+                    filesList.append(fileContent)
 
         if group.sortByDate:
             filesList.sort(
