@@ -22,12 +22,14 @@ files = ["index.md"]
 [assets]
 directories = ["assets"]
 
-[generated]
-    [generated.tags]
+[virtual]
+    [virtual.tags]
     template = "tags.html"
     iterateOver = "tags"
     path = "tags"
+    slug = "tag-{{ genParam }}"
 
-    [generated.tags_index]
+    [virtual.tags_index]
     template = "tags.html"
     path = ""
+    slug = "tags"

@@ -69,7 +69,7 @@ def parseGroups(groupsDict):
 
 
 @dataclass
-class ContentFile:
+class PageInfo:
     title: str
     date: datetime.date
     description: str
@@ -80,8 +80,9 @@ class ContentFile:
     slug: str
     url: str
     group: str
+    iterateOver: str
 
-    def __init__(self, map, *, path, slug, url, content, group=None):
+    def __init__(self, map, *, path, slug, url, content, group=None, iterateOver=None):
         self.title = map["title"] if "title" in map else None
         self.date = map["date"] if "date" in map else None
         self.description = map["description"] if "description" in map else None
@@ -92,6 +93,7 @@ class ContentFile:
         self.path = path
         self.url = url
         self.group = group
+        self.iterateOver = iterateOver
 
     def forTemplate(self):
         return {
@@ -102,4 +104,5 @@ class ContentFile:
             "url": self.url,
             "group": self.group,
             "tags": self.tags,
+            "iterateOver": self.iterateOver,
         }

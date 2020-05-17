@@ -26,7 +26,7 @@ def readSiteFiles(groups, md):
             groups is a list of PagesConfigs
             md is a Markdown renderer object
 
-        Returns a list of ContentFile structs
+        Returns a list of PageInfo structs
     """
     global PAGE_EXTENSION
     content = {}
@@ -78,7 +78,7 @@ def loadPage(path, md, pageExtension):
     else:
         url = os.path.join(dirname, slug) + pageExtension
 
-    fileContent = ContentFile(
+    fileContent = PageInfo(
         meta,
         path=path,
         slug=slug,
@@ -116,7 +116,7 @@ def buildContentFiles(*, buildConfig, siteConfig, content, templates):
     buildDir = buildConfig.buildDirectory
     groupsData = {}
     for groupName, group in content.items():
-        groupsData[groupName] = list(map(ContentFile.forTemplate, group))
+        groupsData[groupName] = list(map(PageInfo.forTemplate, group))
     pagesData = {}
     for _, group in content.items():
         for item in group:
@@ -133,7 +133,8 @@ def buildContentFiles(*, buildConfig, siteConfig, content, templates):
                 }
             )
             path = os.path.join(buildDir, page.url)
-            os.makedirs(os.path.dirname(path), exist_ok=True)
+            if not os.path.isdir(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
             with open(path, "w") as f:
                 f.write(rendered)
 
