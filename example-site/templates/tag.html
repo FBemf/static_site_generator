@@ -3,28 +3,15 @@
 <div class="column">
     <div class="content">
         <p class="title is-3">{{ currentPage.title }}</p>
-        {% if currentPage.group == "posts" %}
-        <p class="subtitle is-6">{{ currentPage.date }}</p>
-        {% if currentPage.tags|count > 0 %}
-        <p class="subtitle is-6"> Tags: 
-            {% for tag in currentPage.tags %}
-            <a href="/tags/{{ tag }}.html">
-                {{ tag }}{{ ", " if not loop.last }}
-            </a>
-            {% endfor %}
-        </p>
-        {% endif %}
         <br>
-        {% endif %}
         {{ currentPage.content }}
-        {% if currentPage.group == "general" %}
         <hr class="hr">
-        {% endif %}
     </div>
 
-    {% if currentPage.group == "general" %}
+    {% if currentPage.group == "tags" %}
     <p class="title is-3">Posts</p>
     {% for post in groups.posts %}
+    {% if currentPage.extra.tag in post.tags %}
     <a href="/{{ post.url }}">
         <div class="card">
             <div class="card-content">
@@ -40,6 +27,7 @@
             </div>
         </div>
     </a>
+    {% endif %}
     {% endfor %}
     {% endif %}
 </div>

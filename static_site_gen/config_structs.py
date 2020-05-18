@@ -10,7 +10,6 @@ class SiteConfig:
     title: str
     subtitle: str
     description: str
-    groups: str
     tags: str
 
     def __init__(self, map: Dict[str, Any], groups=None, tags=None):
@@ -80,7 +79,7 @@ class PageInfo:
     slug: str
     url: str
     group: str
-    iterateOver: str
+    extra: Any
 
     def __init__(self, map, *, path, slug, url, content, group=None, iterateOver=None):
         self.title = map["title"] if "title" in map else None
@@ -88,12 +87,12 @@ class PageInfo:
         self.description = map["description"] if "description" in map else None
         self.template = map["template"] if "template" in map else None
         self.tags = map["tags"] if "tags" in map else []
+        self.extra = map["extra"] if "extra" in map else None
         self.slug = slug
         self.content = content
         self.path = path
         self.url = url
         self.group = group
-        self.iterateOver = iterateOver
 
     def forTemplate(self):
         return {
@@ -104,5 +103,5 @@ class PageInfo:
             "url": self.url,
             "group": self.group,
             "tags": self.tags,
-            "iterateOver": self.iterateOver,
+            "extra": self.extra,
         }

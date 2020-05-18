@@ -1,0 +1,75 @@
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="/assets/bulma.min.css">
+    <link rel="stylesheet" type="text/css" href="/assets/codehilight.css">
+    <style>
+        .bg-img {
+            background-image: url("/assets/trees.jpg");
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: cover;
+        }
+    </style>
+    <title>{{ site.title }}</title>
+    <meta name="description" content="{{ site.description }}">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name=viewport content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+    <section class="hero is-dark is-medium bg-img">
+        <img class="is-bg-img">
+        <div class="hero-body">
+            <div class="container">
+                <a href="/{{ pages.index.url }}">
+                    <h1 class="title">{{ site.title }}</h1>
+                    <h2 class="subtitle">{{ site.subtitle }}</h2>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="columns">
+                <div class="column">
+                    {% block content %}
+                    This is where the content goes!
+                    {% endblock %}
+                </div>
+
+                <div class="column is-2">
+                    <aside class="menu">
+                        <p class="menu-label">Pages</p>
+                        <ul class="menu-list">
+                            <li><a href="/{{ pages.index.url }}">Home</a></li>
+                            <li>
+                                <a href="/{{ pages.index.url }}">Recent Posts</a>
+                                <ul>
+                                    {% for post in groups.posts %}
+                                    {% if loop.index <= 10 %}
+                                    <li><a href="/{{ post.url }}">{{ post.title }}</a></li>
+                                    {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="/{{ pages.tags.url }}">Tags</a>
+                                <ul>
+                                    {% for tag in site.tags %}
+                                    {% if loop.index <= 10 %}
+                                    <li><a href="/tags/{{ tag }}.html">{{ tag }} ({{ site.tagCounts[tag] }})</a></li>
+                                    {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                        </ul>
+                    </aside>
+                </div>
+            </div>
+    </section>
+</body>
+
+</html>

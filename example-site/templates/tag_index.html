@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="column">
+    <div class="content">
+        <p class="title is-3">{{ currentPage.title }}</p>
+        {{ currentPage.content }}
+        <hr class="hr">
+    </div>
+    {% for tag in groups.tags %}
+    <a href="/{{ tag.url }}">
+        <div class="card">
+            <div class="card-content">
+                <div class="media">
+                    <div class="media-content">
+                        <p class="title is-4">{{ tag.title }}</p>
+                        <p class="subtitle is-6">Number of posts: {{ site.tagCounts[tag.extra.tag] }}</p>
+                    </div>
+                </div>
+                <div class="content">
+                    {{ tag.content }}
+                </div>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

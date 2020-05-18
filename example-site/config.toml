@@ -17,19 +17,10 @@ sortByDate = true
 sortReverse = true
 
 [pages.general]
-files = ["index.md"]
+files = ["index.md", "tags.md"]
+
+[pages.tags]
+directories = ["tags"]
 
 [assets]
 directories = ["assets"]
-
-[virtual]
-    [virtual.tags]
-    template = "tags.html"
-    iterateOver = "tags"
-    path = "tags"
-    slug = "tag-{{ genParam }}"
-
-    [virtual.tags_index]
-    template = "tags.html"
-    path = ""
-    slug = "tags"

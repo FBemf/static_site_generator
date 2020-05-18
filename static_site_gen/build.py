@@ -78,13 +78,7 @@ def loadPage(path, md, pageExtension):
     else:
         url = os.path.join(dirname, slug) + pageExtension
 
-    fileContent = PageInfo(
-        meta,
-        path=path,
-        slug=slug,
-        url=url,
-        content=html,
-    )
+    fileContent = PageInfo(meta, path=path, slug=slug, url=url, content=html,)
     return fileContent
 
 
@@ -159,11 +153,11 @@ def buildSite(silent=False):
     global CONFIG_FILE_PATH
     with open(CONFIG_FILE_PATH) as f:
         config = toml.loads(f.read())
-    assetsConfig = FilesConfig(config["assets"])
+    assetsConfig = FilesConfig(config["assets"] if "assets" in config else {})
     buildConfig = BuildConfig(config["build"])
-    pagesConfig = parseGroups(config["pages"])
+    pagesConfig = parseGroups(config["pages"] if "pages" in config else {})
     siteConfig = SiteConfig(config["site"])
-    templateConfig = FilesConfig(config["templates"])
+    templateConfig = FilesConfig(config["templates"] if "templates" in config else {})
 
     # Load templates
     templates = loadTempates(templateConfig)
@@ -199,14 +193,17 @@ def buildSite(silent=False):
     )
 
 
-# Sets the `groups` and `tags` fields in the site config
+# Sets the `tags` field in the site config
 def enrichSiteConfig(siteConfig, content):
-    groups = set()
     tags = set()
-    for (name, group) in content.items():
-        groups.add(name)
+    tagCounts = {}
+    for (_, group) in content.items():
         for page in group:
             for tag in page.tags:
                 tags.add(tag)
-    siteConfig.groups = sorted(list(groups))
-    siteConfig.tags = sorted(list(tags))
+                if tag in tagCounts:
+                    tagCounts[tag] += 1
+                else:
+                    tagCounts[tag] = 1
+    siteConfig.tags = sorted(list(tags), key=lambda x: tagCounts[x], reverse=True)
+    siteConfig.tagCounts = tagCounts
