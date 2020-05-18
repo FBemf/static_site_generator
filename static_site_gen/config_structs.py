@@ -83,7 +83,9 @@ class PageInfo:
 
     def __init__(self, map, *, path, slug, url, content, group=None, iterateOver=None):
         self.title = map["title"] if "title" in map else None
+        self.author = map["author"] if "author" in map else None
         self.date = map["date"] if "date" in map else None
+        self.updated = map["updated"] if "updated" in map else None
         self.description = map["description"] if "description" in map else None
         self.template = map["template"] if "template" in map else None
         self.tags = map["tags"] if "tags" in map else []
@@ -97,7 +99,9 @@ class PageInfo:
     def forTemplate(self):
         return {
             "title": self.title,
+            "author": self.author,
             "date": self.date,
+            "updated": self.updated,
             "description": self.description,
             "content": self.content,
             "url": self.url,
@@ -105,3 +109,12 @@ class PageInfo:
             "tags": self.tags,
             "extra": self.extra,
         }
+
+@dataclass
+class FeedConfig:
+    id: str
+    icon: str
+    logo: str
+    link: str
+    rights: str
+    language: str

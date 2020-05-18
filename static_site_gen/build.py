@@ -7,6 +7,7 @@ import os
 import shutil
 import sys
 
+from feedgen.feed import FeedGenerator
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import markdown
 from markdown_katex import KatexExtension
@@ -207,3 +208,35 @@ def enrichSiteConfig(siteConfig, content):
                     tagCounts[tag] = 1
     siteConfig.tags = sorted(list(tags), key=lambda x: tagCounts[x], reverse=True)
     siteConfig.tagCounts = tagCounts
+
+def makeFeed(feedConfig, *, siteConfig, pages):
+    fg = FeedGenerator()
+    fg.id = feedConfig.id
+    fg.title = siteConfig.title
+    if siteConfig.subtitle:
+        fg.subtitle = siteConfig.subtitle
+    fg.author = siteConfig.author
+    if feedConfiglogo.logo:
+            fg.logo = feedConfig.logo
+    if qfeedConfig.icon:
+            fg.icon = feedConfig.icon
+    fg.link = feedConfig.link
+    fg.language = feedConfig.language
+    fg.rights = feedConfig.rights
+    fg.updated = max(pages, key=lambda x: x.date if date in x else datetime.datetime(1970, 1, 1))
+
+    for page in pages:
+        fe = fg.add_entry()
+        fe.id = "I dunno"
+        fe.title = page.title
+        fe.updated = page.updated if page.updated else page.date
+        fe.author = page.author
+        fe.content = page.content
+        fe.link = f"feedConfig.link/page.url"
+        if page.description:
+                fe.summary = page.description
+        if page.tags:
+                fe.category = page.tags
+        fe.published = page.date
+        if fg.rights:
+            fe.rights = fg.rights
