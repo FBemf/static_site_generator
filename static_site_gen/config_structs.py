@@ -70,16 +70,20 @@ def parseGroups(groupsDict):
 @dataclass
 class PageInfo:
     title: str
+    author: str
     date: datetime.date
+    updated: datetime.date
     description: str
     template: Any
     content: str
     tags: List[str]
-    path: str
+    feed_id: str
+    extra: Any
     slug: str
+    content: str
+    path: str
     url: str
     group: str
-    extra: Any
 
     def __init__(self, map, *, path, slug, url, content, group=None, iterateOver=None):
         self.title = map["title"] if "title" in map else None
@@ -89,6 +93,7 @@ class PageInfo:
         self.description = map["description"] if "description" in map else None
         self.template = map["template"] if "template" in map else None
         self.tags = map["tags"] if "tags" in map else []
+        self.feed_id = map["feed_id"] if "feed_id" in map else []
         self.extra = map["extra"] if "extra" in map else None
         self.slug = slug
         self.content = content
@@ -112,9 +117,21 @@ class PageInfo:
 
 @dataclass
 class FeedConfig:
+    rssPath: str
+    atomPath: str
     id: str
-    icon: str
-    logo: str
     link: str
-    rights: str
+    icon: str
+    contributor: str
+    logo: str
     language: str
+
+    def __init__(self, map):
+        self.rssPath = map["rssPath"]
+        self.atomPath = map["atomPath"]
+        self.id = map["id"]
+        self.link = map["link"] if "link" in map else None
+        self.icon = map["icon"] if "icon" in map else None
+        self.contributor = map["contributor"] if "contributor" in map else None
+        self.logo = map["logo"] if "logo" in map else None
+        self.language = map["language"] if "language" in map else None

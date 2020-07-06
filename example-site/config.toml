@@ -24,3 +24,9 @@ directories = ["tags"]
 
 [assets]
 directories = ["assets"]
+
+[feed]
+rssPath = "feed.xml"
+atomPath = "feed.xml"
+id = "example.org"
+language = "en"
