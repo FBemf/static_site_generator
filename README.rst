@@ -116,13 +116,3 @@ Some examples of values available to templates:
     * `group`: the category (as in `posts` or `general` in the example) that the page falls into
 - `{{ currentPage.url }}` similarly gives the url (or whatever) of the page currently being rendered
 - `{% for post in pages.posts %} ... {% endfor %}` will loop through all the pages in the category `posts` in the order they were sorted
-
-
-TODO:
-
-- Packaging tools
-- Better error handling
-    * Fail helpfully out of missing configs
-    * Fail helpfully on Jinja error
-- Default values for config
-- RSS? Use a different tool for that maybe
